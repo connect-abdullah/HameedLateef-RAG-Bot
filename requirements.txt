@@ -1,0 +1,9 @@
+scrapy
+sentence-transformers
+langchain-huggingface
+pandas 
+faiss-cpu 
+openai
+langchain_google_genai
+dotenv
+langchain

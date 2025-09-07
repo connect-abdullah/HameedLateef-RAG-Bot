@@ -1,0 +1,5 @@
+venv/
+.env
+format.json
+scrapper/hameedlatif/__pycache__
+scrapper/hameedlatif/spiders/__pycache__
