@@ -5,5 +5,9 @@ pandas
 faiss-cpu 
 openai
 langchain_google_genai
-dotenv
+python-dotenv
 langchain
+langchain_community
+fastapi
+uvicorn[standard]
+pydantic

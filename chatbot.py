@@ -8,6 +8,8 @@ import numpy as np
 import faiss
 import json
 import os
+from langchain_core.runnables import RunnableConfig
+from langchain.memory import ConversationSummaryMemory
 
 load_dotenv()
 
@@ -18,6 +20,20 @@ index = faiss.read_index('hospital_faiss_index.bin')
 embedder = SentenceTransformer('all-mpnet-base-v2')
 
 parser = StrOutputParser()
+
+summary_llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash-lite",
+        google_api_key=os.getenv("GEMINI_API_KEY"),
+        temperature=0.2,
+        max_output_tokens=200,  # Shorter for summaries
+    )
+
+# Initialize ConversationSummaryMemory
+memory = ConversationSummaryMemory(
+    llm=summary_llm,
+    memory_key="chat_history",
+    return_messages=True
+)
 
 def search_hospital_data(query, top_k=5):
     """Search for relevant hospital information"""
@@ -40,6 +56,74 @@ def search_hospital_data(query, top_k=5):
     
     return results
 
+# Initializing LLM
+llm = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash-lite",
+        google_api_key=os.getenv("GEMINI_API_KEY"),
+        temperature=0.2,
+        max_output_tokens=500,
+        )
+
+# Create prompt for LLM
+prompt = ChatPromptTemplate.from_messages([
+        ("system", "You are a friendly and helpful assistant for Hameed Latif Hospital. Be conversational and natural, like someone who genuinely cares about helping patients. Avoid being too formal or robotic, but also maintain a warm, professional tone."),
+        ("human", """
+        CONVERSATION CONTEXT:
+        {chat_history}
+
+        CURRENT CONTEXT:
+        {context}
+
+        PATIENT QUESTION:
+        {question}
+
+        **CORE GUIDELINES:**
+        - Use the conversation summary to remember patient details and reference them naturally
+        - Speak like you're having a friendly conversation with someone who needs help
+        - Be concise, warm, and reassuring - like a hospital representative who genuinely cares
+        - Vary your responses naturally, don't use repetitive phrases
+
+        **AVOID ROBOTIC PHRASES:**
+        - ❌ "Hello!", "Certainly", "Based on the information"
+        - ❌ "I'm happy to help", "How can I assist you today?"
+        - ❌ Stiff formal language or repetitive greetings
+        - ❌ Starting every response with greetings
+
+        **RESPONSE STRATEGIES:**
+        - **Procedures**: Explain simply in patient-friendly language, mention relevant departments
+        - **Doctors**: Provide name, specialization, qualifications, expertise, appointment info if available
+        - **Departments/Specialties**: Brief listings with short descriptions (2-3 lines max)
+        - **Hospital Info**: Include name (Hameed Latif Hospital), location (Lahore, Pakistan), phone (+92 42 111-000-043), website, address when relevant
+        - **Missing Info**: Politely suggest contacting the hospital directly without formality
+        - **Medical Advice**: Never diagnose or prescribe - always suggest seeing a doctor
+
+        **NATURAL TONE EXAMPLES:**
+        - Instead of "Hello! I'm happy to help" → "Sure, let me find that for you"
+        - Instead of "How can I assist you today?" → "What else would you like to know?"
+        - Instead of "Certainly!" → "Of course" or just start with the answer
+        - "You're asking about Dr. Khan? He's a cardiologist with MBBS, FCPS qualifications."
+        - "For heart-related concerns, our cardiology department would be the right place."
+        - "I don't have that specific information, but the main desk can help you at +92 (42) 111-000-043."
+
+        **SPECIFIC INSTRUCTIONS:**
+        1. Use conversation history to maintain context and remember patient details
+        2. For procedures: Explain simply, mention relevant departments, only list doctors if clearly in context
+        3. For doctors: Provide available details (name, specialization, qualifications, expertise, appointment)
+        4. For departments: Brief overviews only, don't mention doctors unless clearly listed
+        5. For general info: Include hospital name, location, phone, website, address as needed
+        6. For missing information: Suggest contacting hospital directly in a friendly way
+        7. For medical advice: Always defer to doctors - never diagnose or prescribe
+        8. For broad questions: List available options and invite clarification
+
+        **ALWAYS:**
+        - Sound like a real person who works at the hospital and wants to help
+        - Be approachable and professional without being stiff
+        - Reference previous conversation when appropriate
+        - Keep responses concise and helpful"""
+        )
+    ])
+
+
 def ask_question(question):
     """Get answer using semantic search + GPT"""
     # Search for relevant information
@@ -50,7 +134,7 @@ def ask_question(question):
     for i, result in enumerate(results, 1):
         context += f"{i}. [{result['type'].upper()}] | {result['name']} | (Score: {result['similarity']})\n Content: {result['content']} \n"
         
-        # Extract full structured data
+    # Extract full structured data
         # original_data = result['original_data']
         
         # if result['type'] == 'department':
@@ -88,64 +172,29 @@ def ask_question(question):
         #     if original_data.get('description'):
         #         context += f"   Description: {original_data['description'][:150]}...\n"
         
-        # context += "\n"
+    # context += "\n"
     
-    # Create prompt for GPT
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are a warm, caring, and conversational assistant for Hameed Latif Hospital. Always answer as if you are directly helping a patient. Be professional but approachable, and avoid robotic or repetitive phrases like 'Certainly' or 'Based on the context'. Always sound human and supportive."),
-        ("human", """
-        CONTEXT:
-        {context}
-
-        PATIENT QUESTION:
-        {question}
-
-        Instructions:
-        - Speak warmly and clearly, as if guiding a patient at the hospital front desk. 
-        - Do NOT use stiff phrases like "Based on the information available" or "Certainly".
-        - If the question is about a **procedure**:
-            * Explain it in simple, patient-friendly language using the context.
-            * Explain the procedures
-            * Mention the relevant department(s).
-            * List at least 3-5 doctors (if available), including their name, specialization, qualifications, and expertise.
-        - If the question is about a **doctor**:
-            * Provide name, specialization, qualifications, areas of expertise, and appointment number (if in context).
-            * Mention at least 3 doctors if more are available in the context.
-        - If the question is about a **department**:
-            * Organize the answer with headings: Description, Services, Facilities, Procedures, Doctors.
-        - If the question is about the **hospital in general**, include:
-            * Name: Hameed Latif Hospital
-            * Location: Lahore, Pakistan
-            * Main Phone: +92 (42) 111-000-043
-            * Website: https://www.hameedlatifhospital.com
-            * Address: 14- Abu Baker Block, New Garden Town, Lahore
-        - If any requested detail is missing, politely mention this and suggest contacting the hospital directly.
-        - Do not provide medical prescriptions or diagnosis. Always suggest contacting a doctor for medical advice.
-        - If the question is broad or unclear (e.g., "surgery"), list the types of surgeries or departments in the context, then invite the patient to clarify.
-
-        Always:
-        - Be concise, warm, and reassuring.
-        - Speak naturally, like a hospital representative who truly cares for the patient.
-        """)
-    ])
-            
-    # Get response from GPT
+    
+    # Get response from LLM
     try:
-        llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-lite",
-        google_api_key=os.getenv("GEMINI_API_KEY"),
-        temperature=0.2,
-        max_output_tokens=500,
-    )
+        history_data = memory.load_memory_variables({"input": question})
+        chat_history = history_data.get("chat_history", "")
         chain = prompt | llm | parser
         
+        
+        config = RunnableConfig(configurable={"session_id": "thread-1"})   
+             
         response = chain.invoke({
             "context" : context,
-            "question" : question
+            "question" : question,
+            "chat_history" : chat_history
         })
+        
+        memory.save_context({"input": question}, {"output": response})
         return response
-    except:
-        # Fallback: just return search results if GPT fails
+    except Exception as e:
+        # Fallback: just return search results if LLM fails
+        print(f"LLM error: {e}")
         return f"I found these relevant results:\n\n{context}"
 
 # Simple chat interface
