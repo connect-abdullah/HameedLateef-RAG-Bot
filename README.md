@@ -1,139 +1,206 @@
-# Hameed Latif Hospital Chatbot API
+# 🏥 Hameed Latif Hospital RAG Bot
 
-FastAPI-based REST API for the Hameed Latif Hospital chatbot assistant.
+An AI-powered hospital assistant that provides intelligent responses about hospital services, departments, doctors, and procedures using Retrieval-Augmented Generation (RAG) technology.
 
-## Features
+## 🌟 Features
 
-- 🤖 AI-powered chatbot responses using semantic search
-- 🔍 FAISS-based vector search for hospital information
-- 💬 Conversation memory to maintain context
-- 🌐 CORS-enabled for frontend integration
-- 📋 Comprehensive health checks
+- **🤖 AI-Powered Chatbot**: Uses Google Gemini 2.0 Flash Lite for natural language responses
+- **🔍 Semantic Search**: FAISS-based vector search for accurate information retrieval
+- **💬 Conversation Memory**: Maintains context across conversations
+- **🎨 Modern Web Interface**: Clean, responsive Streamlit frontend
+- **📡 REST API**: FastAPI backend with comprehensive endpoints
+- **🏥 Hospital-Specific**: Tailored for Hameed Latif Hospital services and information
 
-## Installation
+## 🏗️ Project Structure
 
-1. Install dependencies:
-
-```bash
-pip install -r ../requirements.txt
+```
+HameedLateef-RAG-Bot/
+├── README.md                 # This file - project overview
+├── HOW_TO_RUN.md            # Setup and launch instructions
+├── requirements.txt          # Python dependencies
+├── app.py                   # Main launcher (runs both backend & frontend)
+├── .env                     # Environment variables (create this)
+│
+├── backend/                 # FastAPI backend
+│   ├── main.py             # FastAPI application
+│   └── chatbot.py          # RAG implementation
+│
+├── frontend/               # Streamlit frontend
+│   └── streamlit_app.py    # Web interface
+│
+├── data/                   # Hospital data and AI models
+│   ├── hospital_data_with_embeddings.pkl
+│   ├── hospital_faiss_index.bin
+│   ├── hospital_embedding_data.csv
+│   ├── hospital_search_data.csv
+│   └── final_hospital_data.json
+│
+├── docs/                   # Documentation
+│   ├── STREAMLIT_README.md # Frontend documentation
+│   ├── USAGE_GUIDE.md      # User guide
+│   └── test_integration.py # Integration tests
+│
+└── scrapper/              # Data collection tools
+    ├── final_corrected_formatter_v3.py
+    └── hameedlatif/       # Scrapy project
 ```
 
-2. Make sure you have the required data files in the project root:
+## 🚀 Quick Start
 
-   - `hospital_data_with_embeddings.pkl`
-   - `hospital_faiss_index.bin`
-3. Create a `.env` file with your API key:
+### Prerequisites
 
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-```
+- Python 3.9+
+- Google Gemini API Key
+- 4GB+ RAM (for AI models)
 
-## Running the API
+### Installation & Launch
 
-### Development
+1. **Clone and setup**:
+   ```bash
+   git clone <repository-url>
+   cd HameedLateef-RAG-Bot
+   pip install -r requirements.txt
+   ```
 
-```bash
-cd api
-python main.py
-```
+2. **Configure environment**:
+   ```bash
+   # Create .env file
+   echo "GEMINI_API_KEY=your_api_key_here" > .env
+   ```
 
-### Production
+3. **Launch application**:
+   ```bash
+   python app.py
+   ```
 
-```bash
-cd api
-uvicorn main:app --host 0.0.0.0 --port 8000
-```
+4. **Access the application**:
+   - **Web Interface**: http://localhost:8501
+   - **API Documentation**: http://localhost:8000/docs
+   - **Health Check**: http://localhost:8000/health
 
-## API Endpoints
+## 🎯 What You Can Ask
 
-### POST `/chat`
+### Hospital Information
+- "What departments do you have?"
+- "What are your visiting hours?"
+- "Where is the hospital located?"
+- "What is your phone number?"
 
-Send a question and get a chatbot response.
+### Doctor Information
+- "Show me cardiac surgeons"
+- "Who are the anesthesia doctors?"
+- "Tell me about Dr. [Name]"
+- "Which doctors specialize in [condition]?"
 
-**Request Body:**
+### Medical Services
+- "What procedures do you offer for heart problems?"
+- "Tell me about cardiac surgery"
+- "What is anesthesia and how does it work?"
+- "Do you have emergency services?"
 
-```json
-{
-    "question": "What services does the cardiology department offer?",
-    "session_id": "user123"
-}
-```
+### Appointments & Procedures
+- "How do I book an appointment?"
+- "What should I expect during [procedure]?"
+- "How do I prepare for surgery?"
+- "What insurance do you accept?"
 
-**Response:**
+## 🛠️ Technology Stack
 
-```json
-{
-    "response": "Our cardiology department offers comprehensive heart care services including...",
-    "session_id": "user123"
-}
-```
+### Backend
+- **FastAPI**: Modern, fast web framework for building APIs
+- **Google Gemini 2.0**: Large Language Model for natural responses
+- **FAISS**: Facebook AI Similarity Search for vector operations
+- **Sentence Transformers**: Text embedding generation
+- **LangChain**: Framework for LLM applications
+- **Pandas**: Data manipulation and analysis
 
-### GET `/health`
+### Frontend
+- **Streamlit**: Web app framework for data science
+- **Plotly**: Interactive visualizations
+- **Custom CSS**: Modern, hospital-themed styling
 
-Check the health status of all chatbot components.
+### Data Pipeline
+- **Scrapy**: Web scraping framework for data collection
+- **Vector Embeddings**: Semantic search capabilities
+- **JSON/CSV/PKL**: Multiple data format support
 
-**Response:**
+## 📊 Performance
 
-```json
-{
-    "status": "healthy",
-    "components": {
-        "dataframe_loaded": true,
-        "faiss_index_loaded": true,
-        "embedder_loaded": true,
-        "llm_loaded": true,
-        "memory_loaded": true
-    },
-    "message": "All systems operational"
-}
-```
+- **Response Time**: 2-5 seconds (after initial model loading)
+- **First Startup**: 30-60 seconds (model initialization)
+- **Memory Usage**: ~500MB (loaded models)
+- **Concurrent Users**: Supports multiple simultaneous sessions
 
-### GET `/`
+## 🔒 Security & Privacy
 
-Simple health check endpoint.
+- **No Data Storage**: Conversations are not permanently stored
+- **Session Isolation**: Each user session is independent
+- **Input Validation**: All inputs are validated and sanitized
+- **CORS Protection**: Configurable cross-origin resource sharing
 
-## Frontend Integration
+## 🏥 About Hameed Latif Hospital
 
-You can use this API with any frontend framework. Here's a JavaScript example:
+**Hameed Latif Hospital** is a leading healthcare institution in Lahore, Pakistan, providing comprehensive medical services across multiple specialties.
 
-```javascript
-async function askChatbot(question, sessionId = 'default') {
-    const response = await fetch('http://localhost:8000/chat', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            question: question,
-            session_id: sessionId
-        })
-    });
-  
-    const data = await response.json();
-    return data.response;
-}
+- **📍 Address**: 14- Abu Baker Block, New Garden Town, Lahore
+- **📞 Phone**: +92 (42) 111-000-043
+- **🌐 Website**: https://www.hameedlatifhospital.com
 
-// Usage
-askChatbot("What are your visiting hours?")
-    .then(response => console.log(response));
-```
+### Departments Covered
+- Anesthesia and Pain Management
+- Cardiac and Vascular Surgery
+- Cardiology
+- Emergency Medicine
+- General Surgery
+- Internal Medicine
+- Neurology and Neurosurgery
+- Obstetrics and Gynecology
+- Orthopedic Surgery
+- Pediatrics
+- Radiology and Imaging
+- And many more...
 
-## Error Handling
+## 📚 Documentation
 
-The API includes comprehensive error handling:
+- **[HOW_TO_RUN.md](HOW_TO_RUN.md)**: Detailed setup and launch instructions
+- **[docs/STREAMLIT_README.md](docs/STREAMLIT_README.md)**: Frontend technical documentation
+- **[docs/USAGE_GUIDE.md](docs/USAGE_GUIDE.md)**: User guide and tips
+- **API Docs**: Available at http://localhost:8000/docs when running
 
-- 400: Bad Request (empty question)
-- 500: Internal Server Error (component failures)
+## 🤝 Contributing
 
-## Interactive Documentation
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-Once the server is running, visit:
+## 📝 License
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+This project is developed for Hameed Latif Hospital. Please respect the hospital's data and use responsibly.
 
-## Notes
+## 🆘 Support & Troubleshooting
 
-- The API loads all chatbot components on startup, which may take a few moments
-- Memory is maintained per session for conversation context
-- CORS is currently set to allow all origins - configure appropriately for production
+### Common Issues
+
+1. **"Cannot find data files"**: Ensure all files in `data/` directory exist
+2. **"API timeout"**: First startup takes time for model loading
+3. **"Import errors"**: Check Python version (3.9+) and dependencies
+4. **"Port conflicts"**: Modify ports in `app.py` if needed
+
+### Getting Help
+
+1. Check the **[HOW_TO_RUN.md](HOW_TO_RUN.md)** guide
+2. Review error messages in terminal
+3. Ensure all prerequisites are met
+4. Verify API key is correctly set
+
+## 🎉 Acknowledgments
+
+- **Hameed Latif Hospital** for providing comprehensive healthcare data
+- **Google Gemini** for advanced language model capabilities
+- **Open Source Community** for the amazing tools and frameworks
+
+---
+
+**Built with ❤️ for better healthcare accessibility**

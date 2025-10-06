@@ -6,11 +6,13 @@ import sys
 from pathlib import Path
 import uvicorn
 
-# Add parent directory to path to import from project root
-sys.path.append(str(Path(__file__).parent.parent))
+# Add project root to path to import modules
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.append(str(PROJECT_ROOT))
 
-# Import the chatbot function from the existing chatbot.py
-from chatbot import ask_question
+# Import the chatbot function from the backend module
+# Defer heavy imports to runtime to avoid blocking startup
+ask_question = None  # will be set on first use
 
 # Global variable to track if components are loaded
 chatbot_ready = False
@@ -67,7 +69,12 @@ async def chat(request: ChatRequest):
         if not request.question.strip():
             raise HTTPException(status_code=400, detail="Question cannot be empty")
         
-        # Use the existing ask_question function from chatbot.py
+        # Lazy import to avoid loading heavy models at startup
+        global ask_question
+        if ask_question is None:
+            from backend.chatbot import ask_question as _ask
+            ask_question = _ask
+        
         response = ask_question(request.question)
         
         return ChatResponse(

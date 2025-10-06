@@ -8,21 +8,32 @@ import numpy as np
 import faiss
 import json
 import os
+from pathlib import Path
 from langchain_core.runnables import RunnableConfig
 from langchain.memory import ConversationSummaryMemory
 
 load_dotenv()
 
-# Load data and index
+# Get the project root directory (parent of backend folder)
+PROJECT_ROOT = Path(__file__).parent.parent.absolute()
+
+# Load data and index with absolute paths
 print("Loading data...")
-df = pd.read_pickle('hospital_data_with_embeddings.pkl')
-index = faiss.read_index('hospital_faiss_index.bin')
+print(f"Project root: {PROJECT_ROOT}")
+df_path = PROJECT_ROOT / 'data' / 'hospital_data_with_embeddings.pkl'
+index_path = PROJECT_ROOT / 'data' / 'hospital_faiss_index.bin'
+
+print(f"Loading dataframe from: {df_path}")
+print(f"Loading FAISS index from: {index_path}")
+
+df = pd.read_pickle(df_path)
+index = faiss.read_index(str(index_path))
 embedder = SentenceTransformer('all-mpnet-base-v2')
 
 parser = StrOutputParser()
 
 summary_llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.5-flash-lite",
         google_api_key=os.getenv("GEMINI_API_KEY"),
         temperature=0.2,
         max_output_tokens=200,  # Shorter for summaries
@@ -58,7 +69,7 @@ def search_hospital_data(query, top_k=5):
 
 # Initializing LLM
 llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.5-flash-lite",
         google_api_key=os.getenv("GEMINI_API_KEY"),
         temperature=0.2,
         max_output_tokens=500,
@@ -197,26 +208,27 @@ def ask_question(question):
         print(f"LLM error: {e}")
         return f"I found these relevant results:\n\n{context}"
 
-# Simple chat interface
-print("🤖 Hameed Latif Hospital Assistant")
-print("   Type 'quit' to exit\n")
+if __name__ == "__main__":
+    # Simple chat interface (only runs when executing this file directly)
+    print("🤖 Hameed Latif Hospital Assistant")
+    print("   Type 'quit' to exit\n")
 
-while True:
-    try:
-        question = input("You: ").strip()
-        if question.lower() in ['quit', 'exit', 'bye']:
-            print("🤖 Thank you for visiting! Get well soon!")
-            break
+    while True:
+        try:
+            question = input("You: ").strip()
+            if question.lower() in ['quit', 'exit', 'bye']:
+                print("🤖 Thank you for visiting! Get well soon!")
+                break
             
-        if not question:
-            continue
+            if not question:
+                continue
             
-        print("🤖 Searching...")
-        answer = ask_question(question)
-        print(f"🤖 {answer}\n")
+            print("🤖 Searching...")
+            answer = ask_question(question)
+            print(f"🤖 {answer}\n")
         
-    except KeyboardInterrupt:
-        print("\n🤖 Goodbye!")
-        break
-    except Exception as e:
-        print(f"🤖 Sorry, I encountered an error: {e}")
+        except KeyboardInterrupt:
+            print("\n🤖 Goodbye!")
+            break
+        except Exception as e:
+            print(f"🤖 Sorry, I encountered an error: {e}")

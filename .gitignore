@@ -1,4 +1,5 @@
 venv/
+.venv/
 .env
 format.json
 scrapper/hameedlatif/__pycache__
